@@ -7,7 +7,7 @@ import Button from 'components/Button';
 import Loader from 'components/Loader';
 import Modal from 'components/Modal';
 
-import { fetchImages } from '../services/pixabay-api';
+import { fetchImages } from 'services/pixabay-api';
 
 import css from './App.module.scss';
 
@@ -20,6 +20,7 @@ export class App extends Component {
         error: false,
         showModal: false,
         pageNum: 1,
+        showPageEnd: false
     };
 
     // ================== COMPONENT LIFECYCLE
@@ -41,25 +42,26 @@ export class App extends Component {
                 this.setState({ isLoading: true });
                 fetchImages(this.state.term, this.state.pageNum).then(
                     gallery => {
-                        if (gallery.length === 0) {
+                        if (gallery.hits.length === 0) {
                             Notiflix.Notify.warning(
                                 'Nothing found for your request'
                             );
-                            this.setState({ isLoading: false });
-                        } else {
-                            this.setState(prevState => ({
-                                images: [...prevState.images, ...gallery],
-                                isLoading: false,
-                            }));
+                            return;
                         }
+                        this.setState(prevState => ({
+                            images: [...prevState.images, ...gallery.hits],
+                            showPageEnd: this.state.pageNum < Math.ceil(gallery.totalHits / 12)
+                        }));
                     }
                 );
             } catch (error) {
-                this.setState({ error: true, isLoading: false });
+                this.setState({ error: true });
                 Notiflix.Notify.failure(
                     'Oops... Something went wrong please try again!'
                 );
                 console.log(error);
+            } finally {
+                this.setState({ isLoading: false });
             }
         }
     }
@@ -87,22 +89,22 @@ export class App extends Component {
     // ================== /LOGIC
 
     render() {
-        const { images, largeImage, showModal, isLoading } = this.state;
-
+        const { images, largeImage, showModal, isLoading, showPageEnd } = this.state;
+        
         return (
             <div className={css.app}>
                 <Searchbar onSubmit={this.handleSearcbarSubmit} />
-                {images.length !== 0 &&
-                  <ImageGallery items={images} openModal={this.toggleModal} />
-                }
+                {images.length !== 0 && (
+                    <ImageGallery items={images} openModal={this.toggleModal} />
+                )}
                 {isLoading && <Loader />}
 
-                {images.length > 11 && <Button onClick={this.onLoadMore} />}
+                {showPageEnd && <Button onClick={this.onLoadMore} />}
 
                 {showModal && (
                     <Modal onClose={this.toggleModal} largeImage={largeImage} />
                 )}
             </div>
         );
-    };
-};
+    }
+}
