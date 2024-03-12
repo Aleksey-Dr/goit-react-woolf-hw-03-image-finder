@@ -20,7 +20,7 @@ export class App extends Component {
         error: false,
         showModal: false,
         pageNum: 1,
-        showPageEnd: false
+        showPageEnd: false,
     };
 
     // ================== COMPONENT LIFECYCLE
@@ -39,7 +39,7 @@ export class App extends Component {
             prevState.pageNum !== this.state.pageNum
         ) {
             try {
-                this.setState({ isLoading: true });
+                this.setState({ isLoading: true, showPageEnd: false });
                 fetchImages(this.state.term, this.state.pageNum).then(
                     gallery => {
                         if (gallery.hits.length === 0) {
@@ -50,7 +50,9 @@ export class App extends Component {
                         }
                         this.setState(prevState => ({
                             images: [...prevState.images, ...gallery.hits],
-                            showPageEnd: this.state.pageNum < Math.ceil(gallery.totalHits / 12)
+                            showPageEnd:
+                                this.state.pageNum <
+                                Math.ceil(gallery.totalHits / 12),
                         }));
                     }
                 );
@@ -89,8 +91,9 @@ export class App extends Component {
     // ================== /LOGIC
 
     render() {
-        const { images, largeImage, showModal, isLoading, showPageEnd } = this.state;
-        
+        const { images, largeImage, showModal, isLoading, showPageEnd } =
+            this.state;
+
         return (
             <div className={css.app}>
                 <Searchbar onSubmit={this.handleSearcbarSubmit} />
